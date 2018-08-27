@@ -1,0 +1,2 @@
+recursive-include VisWidget/static *.*
+include VisWidget.json
