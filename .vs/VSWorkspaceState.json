@@ -1,7 +1,10 @@
 {
   "ExpandedNodes": [
     "",
+    "\\js",
+    "\\js\\lib",
     "\\VisWidget"
   ],
+  "SelectedNode": "\\js\\README.md",
   "PreviewInSolutionExplorer": false
 }

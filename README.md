@@ -19,3 +19,10 @@ For a development installation (requires npm),
     $ pip install -e .
     $ jupyter nbextension install --py --symlink --sys-prefix VisWidget
     $ jupyter nbextension enable --py --sys-prefix VisWidget
+	
+jupyter nbextension uninstall --py --sys-prefix VisWidget
+delete static
+python setup.py build
+pip install -e .
+jupyter nbextension install --py --symlink --sys-prefix VisWidget
+jupyter nbextension enable --py --sys-prefix VisWidget
