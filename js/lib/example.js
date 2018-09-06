@@ -25,7 +25,10 @@ var HelloModel = widgets.DOMWidgetModel.extend({
         _view_module : 'VisWidget',
         _model_module_version : '0.1.0',
         _view_module_version : '0.1.0',
-        index : 1
+        index: 1,
+        _data : [],
+        _sample : [],
+        _rawdata : []
     })
 });
 
@@ -33,25 +36,20 @@ var HelloModel = widgets.DOMWidgetModel.extend({
 // Custom View. Renders the widget model.
 var HelloView = widgets.DOMWidgetView.extend({
     render: function () {
-        var model = this.model;
-        var that = this;
-
-        var data = null;
-        var graph = null;
-        data = new vis.DataSet();
+        _data = this.model.get('_data');
+        dataset = new vis.DataSet();
         var sqrt = Math.sqrt;
         var pow = Math.pow;
-        var random = Math.random;
+
+        this.value_changed();
+        this.model.on('change:_sample', this.value_changed, this);
 
 
         // create the animation data
-        var imax = 30;
-        for (var i = 0; i < imax; i++) {
-            var x = pow(random(), 2);
-            var y = pow(random(), 2);
-            var z = pow(random(), 2);
-            var style = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
-            data.add({ x: x, y: y, z: z, style: style, id: i });
+        for (var i = 0; i < _data.length; i++) {
+            var sample = _data[i];
+            var style = sqrt(pow(sample[0], 2) + pow(sample[1], 2) + pow(sample[2], 2));
+            dataset.add({ x: sample[0], y: sample[1], z: sample[2], style: style, id: i });
         }
         // specify options
         var options = {
@@ -96,9 +94,13 @@ var HelloView = widgets.DOMWidgetView.extend({
                 }
             }
         }
-        graph = new vis.Graph3d(this.el, data, options);
+        graph = new vis.Graph3d(this.el, dataset, options);
 
     },
+    value_changed: function () {
+        var sample = this.model.get('_sample');
+        console.log(sample);
+    }
 
 });
 
