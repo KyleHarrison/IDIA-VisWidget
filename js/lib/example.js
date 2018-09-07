@@ -37,24 +37,32 @@ var HelloModel = widgets.DOMWidgetModel.extend({
 var HelloView = widgets.DOMWidgetView.extend({
     render: function () {
         _data = this.model.get('_data');
-        dataset = new vis.DataSet();
+        var dataset3d = new vis.DataSet();
+        this.dataset2d = new vis.DataSet();
         var sqrt = Math.sqrt;
         var pow = Math.pow;
-
-        this.value_changed();
+        this.value = 1;
         this.model.on('change:_sample', this.value_changed, this);
+       // this.value_changed();
+        var random = Math.random;
 
+        var imax = 100;
+        for (var i = 0; i < imax; i++) {
+            var x = pow(random(), 2);
+            var y = pow(random(), 2);
+            this.dataset2d.add({ x: x, y: y});
+        }
 
         // create the animation data
         for (var i = 0; i < _data.length; i++) {
             var sample = _data[i];
             var style = sqrt(pow(sample[0], 2) + pow(sample[1], 2) + pow(sample[2], 2));
-            dataset.add({ x: sample[0], y: sample[1], z: sample[2], style: style, id: i });
+            dataset3d.add({ x: sample[0], y: sample[1], z: sample[2], style: style, id: i });
         }
         // specify options
         var options = {
-            width: '600px',
-            height: '600px',
+            width: '400px',
+            height: '400px',
             style: 'dot-color',
             showPerspective: true,
             showGrid: true,
@@ -94,12 +102,30 @@ var HelloView = widgets.DOMWidgetView.extend({
                 }
             }
         }
-        graph = new vis.Graph3d(this.el, dataset, options);
+        this.graph3d = document.createElement("div");
+        this.graph2d = document.createElement("div");
+
+        var options2d = {
+            start: '0',
+            end: '100'
+        };
+
+        scatter = new vis.Graph3d(this.graph3d, dataset3d, options);
+        line = new vis.Graph2d(this.graph2d, this.dataset2d, options2d);
+
+
+        this.el.appendChild(this.graph3d)
+        //this.el.appendChild(this.graph2d)
+
 
     },
     value_changed: function () {
-        var sample = this.model.get('_sample');
-        console.log(sample);
+        console.log("change");
+        //console.log(this.dataset2d)
+        //var sample = this.model.get('_sample');
+        //for (var i = 0; i < sample.length; i++) {
+        //    this.dataset2d.add({ x: i, y: sample[i]});
+        //}
     }
 
 });
