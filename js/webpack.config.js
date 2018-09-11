@@ -38,7 +38,12 @@ module.exports = [
         },
         devtool: 'source-map',
         module: {
-            rules: rules
+            rules: [
+                {
+                    test: /\.js$/,
+                    loader: 'ify-loader'
+                }
+            ]
         },
         externals: ['@jupyter-widgets/base']
     },
