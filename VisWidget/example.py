@@ -14,12 +14,13 @@ from IPython.display import display, clear_output
 class VisWidget(widgets.DOMWidget):
     def __init__(self, data, rawdata):
         super().__init__()
+        #self.layout.height = '700px'
         if data is not None:
             self._data = data.tolist()
         if rawdata is not None:
             self._rawdata = rawdata.tolist()
             self._sample = self._rawdata[0]
-        self.plot(0)
+
     _view_name = Unicode('VisWidgetView').tag(sync=True)
     _model_name = Unicode('VisWidgetModel').tag(sync=True)
     _view_module = Unicode('VisWidget').tag(sync=True)
@@ -31,29 +32,9 @@ class VisWidget(widgets.DOMWidget):
     _rawdata = List([]).tag(sync=True)
     _sample = List([]).tag(sync=True)
 
-    plt.ioff()
-    ax=plt.gca()
-    out=widgets.Output()
-    display(out)
-    
 
     @observe('index')
     def val_changed(self, change):
-        self.plot(change['new'])
         self._sample = self._rawdata[(change['new'])]
-
-    def plot(self, index):
-        self.ax.clear()
-        self.ax.plot(self._rawdata[index])
-        with self.out:
-            clear_output(wait=True)
-            display(self.ax.figure)
-
-        #out = widgets.Output()
-        #self.ax.clear()
-        #self.ax.plot(self._rawdata[index])
-        #with out:
-        #    clear_output(wait=True)
-        #    display(self.ax.figure)
 
 

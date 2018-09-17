@@ -28,30 +28,67 @@ var VisWidgetModel = widgets.DOMWidgetModel.extend({
         index: 1,
         _data: [],
         _sample: [],
-        _rawdata: []
     })
 });
+
 
 
 // Custom View. Renders the widget model.
 var VisWidgetView = widgets.DOMWidgetView.extend({
     render: function () {
         _data = this.model.get('_data');
-        var dataset3d = new vis.DataSet();
+        _sample = this.model.get('_sample');
         var sqrt = Math.sqrt;
         var pow = Math.pow;
-        this.value = 1;
-        var random = Math.random;
-        var data_len = _data.length;
+        this.model.on('change:_sample', this.value_changed, this);
+        this_model = this.model;
+        that = this;
         var x = [];
-        var y = [];
-        var z = [];
+        for (var i = 0; i < _sample.length; i++) {
+            x.push(i);
+        }
 
-        var points = {
+        var hsv2rgb = function (H, S, V) {
+            var R, G, B, C, Hi, X;
+
+            C = V * S;
+            Hi = Math.floor(H / 60);  // hi = 0,1,2,3,4,5
+            X = C * (1 - Math.abs(((H / 60) % 2) - 1));
+
+            switch (Hi) {
+                case 0: R = C; G = X; B = 0; break;
+                case 1: R = X; G = C; B = 0; break;
+                case 2: R = 0; G = C; B = X; break;
+                case 3: R = 0; G = X; B = C; break;
+                case 4: R = X; G = 0; B = C; break;
+                case 5: R = C; G = 0; B = X; break;
+
+                default: R = 0; G = 0; B = 0; break;
+
+            }
+
+            return 'rgb(' + parseInt(R * 255) + ',' + parseInt(G * 255) + ',' + parseInt(B * 255) + ')';
+        };
+        
+
+
+        sample_plot = {
+            x: x,
+            y: _sample,
+            
+            type: 'line'
+        };
+
+        points = {
+            xaxis: 'x2',
+            yaxis: 'y2',
+            text: [],
             x: [],
             y: [],
             z: [],
+            name: [],
             mode: 'markers',
+            hoverinfo: 'text',
             marker: {
                 size: 12,
                 color: [],
@@ -59,40 +96,107 @@ var VisWidgetView = widgets.DOMWidgetView.extend({
                     color: [],
                     width: 0.5
                 },
-                opacity: 0.8
+                opacity: 1
             },
             type: 'scatter3d'
         };
-
-        // create the animation data
+        var distance_range = []
+        // create the scatter plot data dict
         for (var i = 0; i < _data.length; i++) {
-            points.x.push(_data[i][0]);
-            points.y.push(_data[i][1]);
-            points.z.push(_data[i][2]);
-            var style = sqrt(pow(_data[i][0], 2) + pow(_data[i][1], 2) + pow(_data[i][2], 2));
-            points.marker.color.push(style);
-            points.marker.line.color.push(style);
+            distance_range.push(sqrt(pow(_data[i][0], 2) + pow(_data[i][1], 2) + pow(_data[i][2], 2)));
+
+            datapoint = _data[i];
+
+            points.name.push(i);
+            points.x.push(datapoint[0]);
+            points.y.push(datapoint[1]);
+            points.z.push(datapoint[2]);
+            
+            points.text.push("<br> <b>ID:</b> " + i + " <br><b>X:</b> " + datapoint[0].toFixed(2) + "    <b>Y:</b> " + datapoint[1].toFixed(2) + "    <b>Z:</b> " + datapoint[2].toFixed(2));
         }
-        var dataSet = [points];
+
+        min_dist = Math.min(...distance_range);
+        max_dist = Math.max(...distance_range);
+
+        x_max = Math.max(...points.x);
+        y_max = Math.max(...points.y);
+        z_max = Math.max(...points.z);
+        
+        x_min = Math.min(...points.x);
+        y_min = Math.min(...points.y);
+        z_min = Math.min(...points.z);
+
+        //set the scatter plot data points colours 
+        for (var i = 0; i < _data.length; i++) {
+
+            var hue = (1 - (distance_range[i] - min_dist) * 1 / (max_dist - min_dist)) * 240;
+
+            console.log(hue);
+            color = hsv2rgb(hue, 1, 1);
+            points.marker.color.push(color)
+            points.marker.line.color.push(color)
+        }
+        console.log(points.marker.color);
+
+        //for (var i = 0; i < _data.length; i++) {
+        //    var style = sqrt(pow(_data[i][0], 2) + pow(_data[i][1], 2) + pow(_data[i][2], 2));
+        //    points.marker.color.push(i);
+        //}
+
+
+
+        dataSet = [points, sample_plot];
 
         graph3d = document.createElement("div");
+
         this.el.appendChild(graph3d);
 
-        console.log(dataSet);
-        var layout = {
-            autosize: true,
+
+        layout = {
+            autosize: false,
+            //width: 1000,
+           // height: 700,
+            scene: {
+                domain: {
+                    x: [0, 1],
+                    y: [0.3, 1]
+                }
+            },
+            xaxis: { domain: [0,1] },
+            yaxis: { domain: [0,0.3] },
             margin: {
-                l: 0,
+                l: 20,
                 r: 0,
-                b: 0,
-                t: 0
-            }
+                b: 35,
+                t: 0,
+                pad: 0
+            },
+            hoverlabel: {
+                bgcolor: 'white',
+                font: { color: 'black' }
+            },
         };
         Plotly.newPlot(graph3d, dataSet, layout);
 
+        graph3d.on('plotly_click', function (data) {
+            console.log(data);
+            //On plot click triggers for subplot. 2D plot click triggers an event, 3D does not
+            if (data.event == null) {
+                this_model.set('index', data.points[0].pointNumber);
+                that.touch();
+            }
+            
+        });
+    },
+    value_changed: function () {
+        sample_plot.y = this_model.get('_sample');
+        Plotly.react(graph3d, dataSet, layout);
     },
 
+   
+
 });
+
 
 
 module.exports = {
